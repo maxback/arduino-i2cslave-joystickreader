@@ -32,9 +32,9 @@ typedef struct {
 
  int ledPin = 13;
  Joystick joy = { 
-   {A0, 0}, //x axis
-   {A1, 0}, //y axis
-   {2, HIGH, HIGH, HIGH}  //sw (z axis button)
+   {A1, 0}, //x axis
+   {A0, 0}, //y axis
+   {7, HIGH, HIGH, HIGH}  //sw (z axis button)
  };
  
 // the following variables are long's because the time, measured in miliseconds,
@@ -42,7 +42,13 @@ typedef struct {
 long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 50;    // the debounce time; increase if the output flickers
  
+bool printData = false;
+bool printDataOnce = false;
+
+bool ledState = false;
+
  
+ int i=0; 
  void setup() {
   // Join I2C bus as slave with address 8
   Wire.begin(0x8);
@@ -59,12 +65,42 @@ long debounceDelay = 50;    // the debounce time; increase if the output flicker
 
 // Function that executes whenever data is received from master
 void receiveEvent(int howMany) {
+  
+  //Serial.println("Chegou!");
   while (Wire.available()) { // loop through all but the last
     char c = Wire.read(); // receive byte as a character
+    
     Serial.print('[');
     Serial.print(c);
     Serial.print(']');
+
+    if(c == 'p') {
+      printDataOnce = true;
+      char buff[255];
+      sprintf(buff, "x:%d,y:%d,sw:%d", treatValuePercent(joy.x.value), treatValuePercent(joy.y.value), joy.sw.value);
+      Wire.println(buff);
+      Serial.println(buff);
+    }
+    else if(c == 'c')
+      printData = true;
+    else if(c == 's')
+      printData = false;
+    else if(c == 'L') {
+      ledState = true;
+      Serial.println("Bultin led On");
+      Wire.println("Bultin led On");
+    }
+    else if(c == 'l') {
+      ledState = false;
+      Serial.println("Bultin led Off");
+      Wire.println("Bultin led Off");
+    }
+    else
+      Wire.println("options: p,c,s,l,L");
+    
+    
   }
+  
 }
 
  int treatValuePercent(unsigned int data) {
@@ -105,8 +141,6 @@ void receiveEvent(int howMany) {
       joy.sw.value = joy.sw.reading;
     }
   }
-
-  digitalWrite(ledPin, joy.sw.value ? HIGH : LOW);
   
   joy.sw.lastValue = joy.sw.reading;
 
@@ -127,19 +161,47 @@ void receiveEvent(int howMany) {
   Serial.println("%.");
 */
 
-  Serial.print("Joystick:{ x: ");
-  Serial.print(joy.x.value);
-  Serial.print(" (");
-  Serial.print(treatValuePercent(joy.x.value));
-  Serial.print("%),y: ");
-  Serial.print(joy.y.value);
-  Serial.print(" (");
-  Serial.print(treatValuePercent(joy.y.value));
-  Serial.print("%), sw: ");
-  Serial.print(joy.sw.value);
-  Serial.print(" (reading: ");
-  Serial.print(joy.sw.reading);
-  Serial.println(") }");
+  if(printData)
+  {
+    /*
+    Serial.print("Joystick:{ x: ");
+    Serial.print(joy.x.value);
+    Serial.print(" (");
+    Serial.print(treatValuePercent(joy.x.value));
+    Serial.print("%),y: ");
+    Serial.print(joy.y.value);
+    Serial.print(" (");
+    Serial.print(treatValuePercent(joy.y.value));
+    Serial.print("%), sw: ");
+    Serial.print(joy.sw.value);
+    Serial.print(" (reading: ");
+    Serial.print(joy.sw.reading);
+    Serial.println(") }");
+    */
+    
+      char buff[255];
+      sprintf(buff, "x:%d,y:%d,sw:%d", treatValuePercent(joy.x.value), treatValuePercent(joy.y.value), joy.sw.value);
+      Wire.println(buff);
+      Serial.println(buff);
+    
+    i=0;
+  }  
+  else
+  {
+    Serial.print('.');
+    i++;
+    if(i>30)
+    {
+      i=0;
+      Serial.println(';');
+//      printDataOnce = true;
+    }
+  }
+  
+  digitalWrite(ledPin, ledState ? HIGH : LOW);
+  
+  
+  delay(1000);
   
  }
 
