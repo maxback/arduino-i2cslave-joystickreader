@@ -16,3 +16,5 @@ RPI 3 and Leonardo
 |                   20|--GND--------|GND          D7|----|sw button  |
 +---------------------+             +---------------+    +-----------+
 
+You can take the raspbarry's pinout of on internet :-)
+(https://docs.microsoft.com/pt-br/windows/iot-core/media/pinmappingsrpi/rp2_pinout.png)
